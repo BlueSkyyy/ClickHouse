@@ -75,25 +75,16 @@ ASTPtr rewriteSelectQuery(const ASTPtr & query, const std::string & database, co
     return modified_query_ast;
 }
 
-/// insert query has database and table names as bare strings
-/// If the query is null, it creates a insert query with the database and tables
-/// Or it creates a copy of query, changes the database and table names.
-ASTPtr rewriteInsertQuery(const ASTPtr & query, const std::string & database, const std::string & table)
+/// We don't need the columns list because with Native format it can be determined
+/// from the inserted block. And the original columns list is incorrect because inserted blocks are
+///  the form
+ASTPtr createInsertToRemoteTableQuery(const std::string & database, const std::string & table)
 {
-    ASTPtr modified_query_ast = nullptr;
-    if (query == nullptr)
-        modified_query_ast = std::make_shared<ASTInsertQuery>();
-    else
-        modified_query_ast = query->clone();
-
-    auto & actual_query = typeid_cast<ASTInsertQuery &>(*modified_query_ast);
-    actual_query.database = database;
-    actual_query.table = table;
-    actual_query.table_function = nullptr;
-    /// make sure query is not INSERT SELECT
-    actual_query.select = nullptr;
-
-    return modified_query_ast;
+    auto query = std::make_shared<ASTInsertQuery>();
+    query->database = database;
+    query->table = table;
+    query->format = "Native";
+    return query;
 }
 
 /// Calculate maximum number in file names in directory and all subdirectories.
@@ -274,7 +265,7 @@ BlockInputStreams StorageDistributed::read(
 }
 
 
-BlockOutputStreamPtr StorageDistributed::write(const ASTPtr & query, const Settings & settings)
+BlockOutputStreamPtr StorageDistributed::write(const ASTPtr &, const Settings & settings)
 {
     auto cluster = getCluster();
 
@@ -298,7 +289,7 @@ BlockOutputStreamPtr StorageDistributed::write(const ASTPtr & query, const Setti
 
     /// DistributedBlockOutputStream will not own cluster, but will own ConnectionPools of the cluster
     return std::make_shared<DistributedBlockOutputStream>(
-        *this, rewriteInsertQuery(query, remote_database, remote_table), cluster, settings, insert_sync, timeout);
+        *this, createInsertToRemoteTableQuery(remote_database, remote_table), cluster, settings, insert_sync, timeout);
 }
 
 
