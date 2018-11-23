@@ -13,6 +13,10 @@ namespace DB
 
 void AddingDefaultBlockOutputStream::write(const Block & block)
 {
+    auto * log = &Logger::get("AddingdefaultBlockOutputStream");
+    LOG_TRACE(log, "BLOCK " << block.dumpStructure());
+    LOG_TRACE(log, "HEADER " << getHeader().dumpStructure());
+
     Block res;
     /// We take given columns from input block
     /// and missed columns without default value (default and meterialized will be computed later)

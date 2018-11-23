@@ -14,6 +14,10 @@ Block MergeTreeBlockOutputStream::getHeader() const
 
 void MergeTreeBlockOutputStream::write(const Block & block)
 {
+    auto * log = &Logger::get("MergeTreeBlockOutputStream");
+    LOG_TRACE(log, "BLOCK " << block.dumpStructure());
+    LOG_TRACE(log, "HEADER " << getHeader().dumpStructure());
+
     storage.data.delayInsertOrThrowIfNeeded();
 
     auto part_blocks = storage.writer.splitBlockIntoParts(block);

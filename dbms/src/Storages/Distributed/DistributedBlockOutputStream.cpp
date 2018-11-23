@@ -80,6 +80,10 @@ void DistributedBlockOutputStream::writePrefix()
 
 void DistributedBlockOutputStream::write(const Block & block)
 {
+    auto * log = &Logger::get("DistributedBlockOutputStream");
+    LOG_TRACE(log, "BLOCK " << block.dumpStructure());
+    LOG_TRACE(log, "HEADER " << getHeader().dumpStructure());
+
     if (insert_sync)
         writeSync(block);
     else

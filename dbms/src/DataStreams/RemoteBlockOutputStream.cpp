@@ -24,6 +24,7 @@ RemoteBlockOutputStream::RemoteBlockOutputStream(Connection & connection_, const
     /** Send query and receive "header", that describe table structure.
       * Header is needed to know, what structure is required for blocks to be passed to 'write' method.
       */
+    LOG_TRACE(&Logger::get("OLOLO"), "QUERY " << query);
     connection.sendQuery(query, "", QueryProcessingStage::Complete, settings, nullptr);
 
     while (true)
@@ -55,6 +56,10 @@ RemoteBlockOutputStream::RemoteBlockOutputStream(Connection & connection_, const
 
 void RemoteBlockOutputStream::write(const Block & block)
 {
+    auto * log = &Logger::get("RemoteBlockOutputStream");
+    LOG_TRACE(log, "BLOCK " << block.dumpStructure());
+    LOG_TRACE(log, "HEADER " << header.dumpStructure());
+
     if (header)
         assertBlocksHaveEqualStructure(block, header, "RemoteBlockOutputStream");
 
